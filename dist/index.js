@@ -25,9 +25,9 @@ dotenv_1.default.config({ path: ".env" });
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use((0, cors_1.default)({
-    credentials: true,
-    origin: ['http://localhost:4200', 'https://angular-openfabric-test.vercel.app/'],
-    methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH'],
+// credentials: true,
+// origin: ['http://localhost:4200','https://angular-openfabric-test.vercel.app/'],//localhost:5000
+// methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH'],
 }));
 app.use(function (req, res, next) {
     req.header('Access-Control-Allow-Origin');

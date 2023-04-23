@@ -14,9 +14,9 @@ const app = express();
 
 app.use(express.json());
 app.use(cors({
-    credentials: true,
-    origin: ['http://localhost:4200','https://angular-openfabric-test.vercel.app/'],//localhost:5000
-    methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH'],
+    // credentials: true,
+    // origin: ['http://localhost:4200','https://angular-openfabric-test.vercel.app/'],//localhost:5000
+    // methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH'],
 }));
 
 app.use(function (req, res, next) {
