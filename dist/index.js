@@ -46,6 +46,7 @@ app.get('/api', (req, res) => {
     res.send('Api is running...');
 });
 app.get('/api/products', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    res.set('Access-Control-Allow-Origin', 'https://angular-openfabric-test.vercel.app/');
     try {
         const products = yield ProductModel_1.default.find({});
         if (products) {
@@ -63,6 +64,7 @@ app.get('/api/products', (req, res) => __awaiter(void 0, void 0, void 0, functio
     }
 }));
 app.get('/api/products/:_id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    res.set('Access-Control-Allow-Origin', 'https://angular-openfabric-test.vercel.app/');
     try {
         const product = yield ProductModel_1.default.findById(req.params._id);
         if (product) {
@@ -80,6 +82,7 @@ app.get('/api/products/:_id', (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
 }));
 app.post('/api/products/add', authMiddleware_1.protect, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    res.set('Access-Control-Allow-Origin', 'https://angular-openfabric-test.vercel.app/');
     const product = req.body;
     if (mongoose_1.default.Types.ObjectId.isValid(product._id)) {
         const productExists = yield ProductModel_1.default.findById(product._id);
@@ -120,6 +123,7 @@ app.post('/api/products/add', authMiddleware_1.protect, (req, res) => __awaiter(
     });
 }));
 app.post('/api/products/delete', authMiddleware_1.protect, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    res.set('Access-Control-Allow-Origin', 'https://angular-openfabric-test.vercel.app/');
     const product = req.body;
     try {
         const productExists = yield ProductModel_1.default.findById(product._id);

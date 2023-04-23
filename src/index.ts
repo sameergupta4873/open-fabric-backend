@@ -44,6 +44,7 @@ app.get('/api', (req, res) => {
 });
 
 app.get('/api/products', async (req: Request, res: Response) => {
+    res.set('Access-Control-Allow-Origin', 'https://angular-openfabric-test.vercel.app/');
     try {
         const products = await Product.find({});
         if (products) {
@@ -60,6 +61,7 @@ app.get('/api/products', async (req: Request, res: Response) => {
 });
 
 app.get('/api/products/:_id', async (req: Request, res: Response) => {
+    res.set('Access-Control-Allow-Origin', 'https://angular-openfabric-test.vercel.app/');
     try {
         const product = await Product.findById(req.params._id);
         if (product) {
@@ -76,6 +78,7 @@ app.get('/api/products/:_id', async (req: Request, res: Response) => {
 });
 
 app.post('/api/products/add', protect, async (req: Request, res: Response) => {
+    res.set('Access-Control-Allow-Origin', 'https://angular-openfabric-test.vercel.app/');
     const product = req.body;
     if(mongoose.Types.ObjectId.isValid(product._id)){
         const productExists = await Product.findById(product._id);
@@ -118,6 +121,7 @@ app.post('/api/products/add', protect, async (req: Request, res: Response) => {
 });
 
 app.post('/api/products/delete', protect, async (req: Request, res: Response) => {
+    res.set('Access-Control-Allow-Origin', 'https://angular-openfabric-test.vercel.app/');
     const product = req.body;
     try {
         const productExists = await Product.findById(product._id);
