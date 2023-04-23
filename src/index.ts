@@ -15,8 +15,19 @@ const app = express();
 app.use(express.json());
 app.use(cors({
     credentials: true,
-    origin: ['http://localhost:4200']//localhost:5000
+    origin: ['http://localhost:4200','https://angular-openfabric-test.vercel.app/'],//localhost:5000
+    methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH'],
 }));
+
+app.use(function (req, res, next) {
+    res.header('Content-Type', 'application/json;charset=UTF-8')
+    res.header('Access-Control-Allow-Credentials', 'true')
+    res.header(
+      'Access-Control-Allow-Headers',
+      'Origin, X-Requested-With, Content-Type, Accept'
+    )
+    next()
+  })
 
 connectToDb();
 

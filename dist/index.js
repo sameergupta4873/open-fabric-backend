@@ -26,8 +26,15 @@ const app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use((0, cors_1.default)({
     credentials: true,
-    origin: ['http://localhost:4200'] //localhost:5000
+    origin: ['http://localhost:4200', 'https://angular-openfabric-test.vercel.app/'],
+    methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH'],
 }));
+app.use(function (req, res, next) {
+    res.header('Content-Type', 'application/json;charset=UTF-8');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    next();
+});
 (0, db_1.default)();
 const validator = (item, regex) => {
     return regex.test(item);
