@@ -17,10 +17,12 @@ const cors_1 = __importDefault(require("cors"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const db_1 = __importDefault(require("./config/db"));
 const ProductModel_1 = __importDefault(require("./models/ProductModel"));
-const UserModel_1 = __importDefault(require("./models/UserModel"));
+const OrderModel_1 = __importDefault(require("./models/OrderModel"));
 const authMiddleware_1 = require("./middleware/authMiddleware");
 const dotenv_1 = __importDefault(require("dotenv"));
 const mongoose_1 = __importDefault(require("mongoose"));
+const UserModel_1 = __importDefault(require("./models/UserModel"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 dotenv_1.default.config({ path: ".env" });
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
@@ -46,6 +48,7 @@ app.get('/', (req, res) => {
 app.get('/api', (req, res) => {
     res.send('Api is running...');
 });
+// --------------- Product Routes ---------------- 
 app.get('/api/products', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const products = yield ProductModel_1.default.find({});
@@ -82,6 +85,7 @@ app.get('/api/products/:_id', (req, res) => __awaiter(void 0, void 0, void 0, fu
 }));
 app.post('/api/products/add', authMiddleware_1.protect, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const product = req.body;
+    console.log(product._id);
     if (mongoose_1.default.Types.ObjectId.isValid(product._id)) {
         const productExists = yield ProductModel_1.default.findById(product._id);
         if (productExists) {
@@ -179,6 +183,168 @@ app.post('/api/user/login', (req, res) => __awaiter(void 0, void 0, void 0, func
         });
     }
 }));
+// --------------- Order Routes ---------------- 
+app.get('/api/orders', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const orders = yield OrderModel_1.default.find({});
+        res.status(200).json(orders);
+    }
+    catch (error) {
+        res.status(500).send({
+            message: 'Error in fetching orders',
+            error: error,
+        });
+    }
+}));
+app.get('/api/orders/:orderId', authMiddleware_1.protect, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const order = yield OrderModel_1.default.findById(req.params.orderId).populate('user', 'name email');
+        if (order) {
+            res.status(200).json(order);
+        }
+        else {
+            res.status(404).send({ message: 'Order Not Found' });
+        }
+    }
+    catch (error) {
+        res.status(500).send({
+            message: 'Error in fetching order',
+            error: error,
+        });
+    }
+}));
+app.post('/api/orders/add', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { orderItems, shippingAddress, paymentResult, itemsPrice, taxPrice, shippingPrice, totalPrice, isPaid, paidAt, isDelivered, deliverAt, paymentMethod, } = req.body;
+    try {
+        const newOrder = yield OrderModel_1.default.create({
+            orderItems,
+            shippingAddress,
+            paymentResult,
+            itemsPrice,
+            taxPrice,
+            shippingPrice,
+            totalPrice,
+            isPaid,
+            paidAt,
+            isDelivered,
+            deliverAt,
+            paymentMethod,
+        });
+        res.status(201).json({
+            order: newOrder,
+            message: 'Order Added Successfully',
+        });
+    }
+    catch (error) {
+        res.status(500).send({
+            message: 'Error in adding order',
+            error: error,
+        });
+    }
+}));
+app.put('/api/orders/:orderId/edit', authMiddleware_1.protect, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { orderItems, shippingAddress, paymentResult, itemsPrice, taxPrice, shippingPrice, totalPrice, isPaid, paidAt, isDelivered, deliverAt, paymentMethod, userId } = req.body;
+    try {
+        const updatedOrder = yield OrderModel_1.default.findByIdAndUpdate(req.params.orderId, {
+            userId,
+            orderItems,
+            shippingAddress,
+            paymentResult,
+            itemsPrice,
+            taxPrice,
+            shippingPrice,
+            totalPrice,
+            isPaid,
+            paidAt,
+            isDelivered,
+            deliverAt,
+            paymentMethod,
+        }, { new: true });
+        if (updatedOrder) {
+            res.status(200).json({
+                order: updatedOrder,
+                message: 'Order Updated Successfully',
+            });
+        }
+        else {
+            res.status(404).send({ message: 'Order Not Found' });
+        }
+    }
+    catch (error) {
+        res.status(500).send({
+            message: 'Error in updating order',
+            error: error,
+        });
+    }
+}));
+app.delete('/api/orders/:orderId/delete', authMiddleware_1.protect, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const deletedOrder = yield OrderModel_1.default.findByIdAndDelete(req.params.orderId);
+        if (deletedOrder) {
+            res.status(200).json({
+                order: deletedOrder,
+                message: 'Order Deleted Successfully',
+            });
+        }
+        else {
+            res.status(404).send({ message: 'Order Not Found' });
+        }
+    }
+    catch (error) {
+        res.status(500).send({
+            message: 'Error in deleting order',
+            error: error,
+        });
+    }
+}));
+// --------------- User Routes -------------------------------------------
+app.get('/api/users', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const Users = yield UserModel_1.default.find({});
+        if (Users) {
+            res.status(200).json(Users);
+        }
+        else {
+            res.status(404).send({ message: 'Users Not Found' });
+        }
+    }
+    catch (error) {
+        res.status(500).send({
+            message: 'Error in fetching Users',
+            error: error
+        });
+    }
+}));
+app.post('/api/users/add', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { name, email, password, isAdmin } = req.body;
+        const existingUser = yield UserModel_1.default.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: 'User with this email already exists' });
+        }
+        const newUser = new UserModel_1.default({
+            name,
+            email,
+            password,
+            isAdmin,
+        });
+        const salt = yield bcryptjs_1.default.genSalt(10);
+        newUser.password = yield bcryptjs_1.default.hash(newUser.password, salt);
+        const savedUser = yield newUser.save();
+        res.status(201).json({
+            user: savedUser,
+            message: 'User added successfully',
+        });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: 'Error in adding user',
+            error: error.message,
+        });
+    }
+}));
+// --------------------------------------------------
 const generateToken = (user) => __awaiter(void 0, void 0, void 0, function* () {
     const token = jsonwebtoken_1.default.sign({
         email: user.email,

@@ -3,10 +3,14 @@ import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import connectToDb from './config/db';
 import Product from './models/ProductModel';
-import User from './models/UserModel';
+import Order from './models/OrderModel';  
 import { protect } from './middleware/authMiddleware';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import User from './models/UserModel';
+import bcrypt from 'bcryptjs';
+
+
 
 dotenv.config({path:".env"})
 
@@ -44,6 +48,10 @@ app.get('/api', (req, res) => {
     res.send('Api is running...');
 });
 
+
+// --------------- Product Routes ---------------- 
+
+
 app.get('/api/products', async (req: Request, res: Response) => {
     try {
         const products = await Product.find({});
@@ -59,6 +67,10 @@ app.get('/api/products', async (req: Request, res: Response) => {
         });
     }
 });
+
+
+
+
 
 app.get('/api/products/:_id', async (req: Request, res: Response) => {
     try {
@@ -78,6 +90,7 @@ app.get('/api/products/:_id', async (req: Request, res: Response) => {
 
 app.post('/api/products/add', protect, async (req: Request, res: Response) => {
     const product = req.body;
+    console.log(product._id)
     if(mongoose.Types.ObjectId.isValid(product._id)){
         const productExists = await Product.findById(product._id);
         if (productExists) {
@@ -143,6 +156,7 @@ app.post('/api/products/delete', protect, async (req: Request, res: Response) =>
     }
 });
 
+
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 app.post('/api/user/login', async (req: Request, res: Response) => {
     try {
@@ -175,6 +189,218 @@ app.post('/api/user/login', async (req: Request, res: Response) => {
         });
     }
 });
+
+// --------------- Order Routes ---------------- 
+
+app.get('/api/orders', async (req: Request, res: Response) => {
+    try {
+      const orders = await Order.find({});
+      res.status(200).json(orders);
+    } catch (error) {
+      res.status(500).send({
+        message: 'Error in fetching orders',
+        error: error,
+      });
+    }
+  });
+  
+ 
+  app.get('/api/orders/:orderId', protect, async (req: Request, res: Response) => {
+    try {
+      const order = await Order.findById(req.params.orderId).populate('user', 'name email');
+      if (order) {
+        res.status(200).json(order);
+      } else {
+        res.status(404).send({ message: 'Order Not Found' });
+      }
+    } catch (error) {
+      res.status(500).send({
+        message: 'Error in fetching order',
+        error: error,
+      });
+    }
+  });
+  
+  
+  app.post('/api/orders/add', async (req: Request, res: Response) => {
+    const {
+      orderItems,
+      shippingAddress,
+      paymentResult,
+      itemsPrice,
+      taxPrice,
+      shippingPrice,
+      totalPrice,
+      isPaid,
+      paidAt,
+      isDelivered,
+      deliverAt,
+      paymentMethod,
+    } = req.body;
+
+    try {
+      const newOrder = await Order.create({
+        orderItems,
+        shippingAddress,
+        paymentResult,
+        itemsPrice,
+        taxPrice,
+        shippingPrice,
+        totalPrice,
+        isPaid,
+        paidAt,
+        isDelivered,
+        deliverAt,
+        paymentMethod,
+      });
+  
+      res.status(201).json({
+        order: newOrder,
+        message: 'Order Added Successfully',
+      });
+    } catch (error) {
+      res.status(500).send({
+        message: 'Error in adding order',
+        error: error,
+      });
+    }
+  });
+  
+  
+  app.put('/api/orders/:orderId/edit', protect, async (req: Request, res: Response) => {
+    const {
+      orderItems,
+      shippingAddress,
+      paymentResult,
+      itemsPrice,
+      taxPrice,
+      shippingPrice,
+      totalPrice,
+      isPaid,
+      paidAt,
+      isDelivered,
+      deliverAt,
+      paymentMethod,
+      userId
+    } = req.body; 
+  
+    try {
+      const updatedOrder = await Order.findByIdAndUpdate(
+        req.params.orderId,
+        {
+          userId,
+          orderItems,
+          shippingAddress,
+          paymentResult,
+          itemsPrice,
+          taxPrice,
+          shippingPrice,
+          totalPrice,
+          isPaid,
+          paidAt,
+          isDelivered,
+          deliverAt,
+          paymentMethod,
+        },
+        { new: true } 
+      );
+  
+      if (updatedOrder) {
+        res.status(200).json({
+          order: updatedOrder,
+          message: 'Order Updated Successfully',
+        });
+      } else {
+        res.status(404).send({ message: 'Order Not Found' });
+      }
+    } catch (error) {
+      res.status(500).send({
+        message: 'Error in updating order',
+        error: error,
+      });
+    }
+  });
+  
+  app.delete('/api/orders/:orderId/delete', protect, async (req: Request, res: Response) => {
+    try {
+      const deletedOrder = await Order.findByIdAndDelete(req.params.orderId);
+  
+      if (deletedOrder) {
+        res.status(200).json({
+          order: deletedOrder,
+          message: 'Order Deleted Successfully',
+        });
+      } else {
+        res.status(404).send({ message: 'Order Not Found' });
+      }
+    } catch (error) {
+      res.status(500).send({
+        message: 'Error in deleting order',
+        error: error,
+      });
+    }
+  });
+
+
+
+// --------------- User Routes -------------------------------------------
+
+
+app.get('/api/users', async (req: Request, res: Response) => {
+    try {
+        const Users = await User.find({});
+        if (Users) {
+            res.status(200).json(Users);
+        } else {
+            res.status(404).send({ message: 'Users Not Found' });
+        }
+    } catch (error) {
+        res.status(500).send({
+            message: 'Error in fetching Users',
+            error: error
+        });
+    }
+});
+
+
+app.post('/api/users/add', async (req: Request, res: Response) => {
+    try {
+      const { name, email, password, isAdmin } = req.body;
+  
+      const existingUser = await User.findOne({ email });
+  
+      if (existingUser) {
+        return res.status(400).json({ message: 'User with this email already exists' });
+      }
+  
+      const newUser = new User({
+        name,
+        email,
+        password,
+        isAdmin,
+      });
+  
+      const salt = await bcrypt.genSalt(10);
+      newUser.password = await bcrypt.hash(newUser.password, salt);
+  
+      const savedUser = await newUser.save();
+  
+      res.status(201).json({
+        user: savedUser,
+        message: 'User added successfully',
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        message: 'Error in adding user',
+        error: error.message,
+      });
+    }
+  });
+
+
+  // --------------------------------------------------
+
 
 const generateToken = async (user: any) => {
     const token = jwt.sign({
